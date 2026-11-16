@@ -1,0 +1,20 @@
+# DirectR GitHub Code Owners
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global fallback: repo maintainer
+* @Aoi-03
+
+# Task 1: Narrative & Screenplay (Friend 1)
+/modules/narrative_screenplay/ @Aoi-03
+
+# Task 2: Visual Art & Design Assist (Friend 2)
+/modules/visual_art_design/ @Aoi-03
+
+# Task 3: Soundscapes & Composition (Friend 3)
+/modules/audio_soundscapes/ @Aoi-03
+
+# Task 4: Content Strategy & Distribution (Friend 4)
+/modules/creator_distribution/ @Aoi-03
+
+# Core Architecture & Shared Schemas (Requires team review)
+/core/ @Aoi-03
