@@ -16,13 +16,14 @@ from .harmony.chord_progressions import MicrotonalChordBuilder
 from .mixer.dsp_mixer import AudioMixDownEngine
 from .mixer.ducking import DialogueSidechainDucker
 from .mixer.spatializer import AcousticSpatializer
+from .gemini_audio import GeminiAudioEngine
 
 
 class AudioStudioEngine:
     """
     Facade engine for all audio and music studio functions.
     Exposes simple interfaces for the Core Swarm Orchestrator while leveraging
-    dedicated sub-engines for stems, Foley, harmony, and DSP mixing.
+    dedicated sub-engines for stems, Foley, harmony, DSP mixing, and Google Gemini AI.
     """
 
     def __init__(self, event_bus: Optional[EventBus] = None):
@@ -35,6 +36,7 @@ class AudioStudioEngine:
         self.ducker = DialogueSidechainDucker()
         self.spatializer = AcousticSpatializer()
         self.wav_synth = ProceduralWavSynthesizer()
+        self.gemini = GeminiAudioEngine()
 
     # -------------------------------------------------------------------------
     # 1. Dynamic Tension-Adaptive Stem Arrangements

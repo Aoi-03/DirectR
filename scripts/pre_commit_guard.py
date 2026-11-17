@@ -60,12 +60,14 @@ def main():
     if not staged:
         sys.exit(0)
 
-    # 1. Check for blocked image files
+    # 1. Check for blocked image files (screenshots / root loose media)
     blocked_images = []
     for f in staged:
         ext = os.path.splitext(f)[1].lower()
         if ext in VALID_EXTENSIONS_BLOCKED or "screenshot" in f.lower():
-            blocked_images.append(f)
+            # Allow web icons and concept artwork inside frontend direct-r-production-studio
+            if not f.startswith("direct-r-production-studio/public/"):
+                blocked_images.append(f)
 
     if blocked_images:
         print("\n❌ [DirectR Guard Error] Blocked image files are staged:")
