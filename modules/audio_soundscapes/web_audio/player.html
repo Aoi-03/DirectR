@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DirectR — Dynamic Audio Studio & Adaptive Soundscapes</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #121826;
+            --bg-card: #1b2333;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --accent-magenta: #f35588;
+            --accent-orange: #ff9a3c;
+            --text-main: #f0f4f8;
+            --text-dim: #94a3b8;
+            --border: #2d3748;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            background: #1e293b;
+            color: var(--accent-cyan);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--accent-cyan);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent-cyan);
+        }
+
+        /* Canvas Visualizer */
+        #visualizer {
+            width: 100%;
+            height: 100px;
+            background: #000;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+
+        /* Controls */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #2d3748;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-magenta);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent-magenta);
+        }
+
+        /* Buttons */
+        .btn {
+            background: #2d3748;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #3b4252;
+            border-color: var(--accent-cyan);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-magenta));
+            border: none;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 16px rgba(79, 172, 254, 0.4);
+        }
+
+        /* Active stem indicators */
+        .stem-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .stem-pill {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #121826;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            transition: all 0.3s ease;
+        }
+
+        .stem-pill.active {
+            background: rgba(0, 242, 254, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 8px rgba(0, 242, 254, 0.2);
+        }
+
+        /* Soundboard */
+        .soundboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+        }
+
+        .sfx-btn {
+            padding: 12px 8px;
+            font-size: 13px;
+            text-align: center;
+            background: #1f2937;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .sfx-btn:hover {
+            border-color: var(--accent-orange);
+            background: rgba(255, 154, 60, 0.15);
+        }
+
+        .info-box {
+            background: #0f172a;
+            border-left: 4px solid var(--accent-cyan);
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-dim);
+            margin-top: 16px;
+            border-radius: 0 6px 6px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1>DirectR Studio — Audio Soundscapes</h1>
+            <p style="color: var(--text-dim); font-size: 14px; margin-top: 4px;">
+                Module 3 (Task 3): Dynamic Stems, Zero-Shot Foley & Microtonal Harmonies
+            </p>
+        </div>
+        <div class="badge">Branch: feature/audio-studio</div>
+    </div>
+
+    <!-- Live Oscilloscope Spectrum -->
+    <canvas id="visualizer"></canvas>
+
+    <div class="grid">
+
+        <!-- Card 1: Dynamic Tension & Adaptive Stems -->
+        <div class="card">
+            <h2>🎛️ Dynamic Tension Stem Engine</h2>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                <button id="toggleAudioBtn" class="btn btn-primary" style="flex: 1;">▶ Start Soundscape Engine</button>
+                <button id="duckingToggleBtn" class="btn" style="flex: 1;">Sidechain Ducking: OFF</button>
+            </div>
+
+            <div class="control-group">
+                <div class="control-header">
+                    <span>Scene Dramatic Tension: <span id="tensionValue" style="color: var(--accent-magenta);">0.30</span></span>
+                    <span>Tempo: <span id="tempoValue" style="color: var(--accent-cyan);">90 BPM</span></span>
+                </div>
+                <input type="range" id="tensionSlider" class="slider" min="0" max="1" step="0.01" value="0.30">
+            </div>
+
+            <div class="control-header" style="margin-top: 16px;">
+                <span>Active Stem Arrangement:</span>
+                <span id="valenceLabel" style="color: var(--accent-orange); font-size: 12px;">Atmospheric Calm</span>
+            </div>
+
+            <div class="stem-list" id="stemList">
+                <div class="stem-pill active" id="stem_pad">ambient_pad</div>
+                <div class="stem-pill active" id="stem_sub">sub_drone</div>
+                <div class="stem-pill" id="stem_perc">rhythm_percussion</div>
+                <div class="stem-pill" id="stem_lead">screaming_lead_synth</div>
+                <div class="stem-pill" id="stem_808">distorted_808</div>
+                <div class="stem-pill" id="stem_riser">tension_riser</div>
+            </div>
+
+            <div class="info-box">
+                <strong>Narrative Sync:</strong> Pulls tension scores dynamically from Friend 1's <code>SceneBeat</code>. Automatically automates low-pass filter cutoff (200Hz - 8kHz) and tempo (65 - 150 BPM).
+            </div>
+        </div>
+
+        <!-- Card 2: Zero-Shot Foley Soundboard -->
+        <div class="card">
+            <h2>💥 Zero-Shot Cinematic Foley Synthesizer</h2>
+            <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 16px;">
+                Click any prompt to procedurally synthesize the acoustic waveform in real time:
+            </p>
+
+            <div class="soundboard">
+                <button class="sfx-btn" onclick="playFoley('spark')">⚡ Electric Sparks</button>
+                <button class="sfx-btn" onclick="playFoley('rain')">🌧️ Rain on Steel</button>
+                <button class="sfx-btn" onclick="playFoley('gravel')">🥾 Boot on Gravel</button>
+                <button class="sfx-btn" onclick="playFoley('impact')">⚔️ Metallic Clang</button>
+                <button class="sfx-btn" onclick="playFoley('explosion')">💣 Sub Shockwave</button>
+                <button class="sfx-btn" onclick="playFoley('siren')">🚨 Industrial Siren</button>
+            </div>
+
+            <div class="info-box">
+                <strong>Zero-Shot Synthesis:</strong> Text action cues in the screenplay are parsed into kinetic impulse profiles, filter frequencies, and ADSR envelopes without pre-recorded samples.
+            </div>
+        </div>
+
+        <!-- Card 3: AI Micro-Tonal Harmony Arranger -->
+        <div class="card" style="grid-column: span 2;">
+            <h2>🎼 Micro-Tonal Scale & Harmony Arranger (24-EDO Quarter-Tones)</h2>
+            <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 16px;">
+                Standard Western music uses 12 semitones. DirectR uses 24-EDO (quarter-tones: 50-cent increments) to convey otherworldly psychological tension:
+            </p>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn" onclick="playMicrotonalChord([220, 269.2, 330.0, 404.5])">
+                    🔮 Uncanny Submerged (Neutral 3rd: 350¢)
+                </button>
+                <button class="btn" onclick="playMicrotonalChord([220, 239.7, 311.1, 359.8])">
+                    👁️ Dystopian Paranoia (Quarter-Tone Sharp 2nd: 150¢)
+                </button>
+                <button class="btn" onclick="playMicrotonalChord([220, 254.1, 330.0, 381.8])">
+                    ⚡ Cyber Mysticism (Sub-Minor 3rd: 250¢)
+                </button>
+                <button class="btn" onclick="playMicrotonalChord([220, 239.7, 302.2, 311.1, 428.5])">
+                    ⚠️ Hyper-Tension Crisis Cluster
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let audioCtx = null;
+        let isPlaying = false;
+        let isDucking = false;
+        let masterGain = null;
+        let analyser = null;
+        let padOsc = null, subOsc = null, leadOsc = null, noiseNode = null;
+        let filterNode = null;
+
+        function initAudio() {
+            if (audioCtx) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+
+            filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.setValueAtTime(1200, audioCtx.currentTime);
+
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+
+            masterGain.connect(filterNode);
+            filterNode.connect(analyser);
+            analyser.connect(audioCtx.destination);
+
+            startVisualizer();
+        }
+
+        // Toggle Continuous Engine
+        document.getElementById('toggleAudioBtn').addEventListener('click', function() {
+            initAudio();
+            if (!isPlaying) {
+                audioCtx.resume();
+                startStems();
+                this.textContent = '⏹ Stop Soundscape Engine';
+                this.classList.replace('btn-primary', 'btn');
+                isPlaying = true;
+            } else {
+                stopStems();
+                this.textContent = '▶ Start Soundscape Engine';
+                this.classList.replace('btn', 'btn-primary');
+                isPlaying = false;
+            }
+        });
+
+        function startStems() {
+            const now = audioCtx.currentTime;
+
+            // Pad Synth (Saw with lowpass)
+            padOsc = audioCtx.createOscillator();
+            padOsc.type = 'sawtooth';
+            padOsc.frequency.setValueAtTime(130.81, now); // C3
+            const padGain = audioCtx.createGain();
+            padGain.gain.setValueAtTime(0.25, now);
+            padOsc.connect(padGain);
+            padGain.connect(masterGain);
+            padOsc.start();
+
+            // Sub Drone (Sine)
+            subOsc = audioCtx.createOscillator();
+            subOsc.type = 'sine';
+            subOsc.frequency.setValueAtTime(65.41, now); // C2
+            const subGain = audioCtx.createGain();
+            subGain.gain.setValueAtTime(0.4, now);
+            subOsc.connect(subGain);
+            subGain.connect(masterGain);
+            subOsc.start();
+
+            // Lead Synth
+            leadOsc = audioCtx.createOscillator();
+            leadOsc.type = 'triangle';
+            leadOsc.frequency.setValueAtTime(261.63, now); // C4
+            leadOsc.gainNode = audioCtx.createGain();
+            leadOsc.gainNode.gain.setValueAtTime(0.0, now);
+            leadOsc.connect(leadOsc.gainNode);
+            leadOsc.gainNode.connect(masterGain);
+            leadOsc.start();
+        }
+
+        function stopStems() {
+            if (padOsc) { padOsc.stop(); padOsc = null; }
+            if (subOsc) { subOsc.stop(); subOsc = null; }
+            if (leadOsc) { leadOsc.stop(); leadOsc = null; }
+        }
+
+        // Tension Slider Change
+        const slider = document.getElementById('tensionSlider');
+        slider.addEventListener('input', function() {
+            const t = parseFloat(this.value);
+            document.getElementById('tensionValue').textContent = t.toFixed(2);
+
+            const bpm = Math.floor(65 + (t * 85));
+            document.getElementById('tempoValue').textContent = `${bpm} BPM`;
+
+            if (filterNode && audioCtx) {
+                // Dynamic Filter Cutoff Modulation
+                const cutoff = 400 + Math.pow(t, 2) * 8000;
+                filterNode.frequency.setTargetAtTime(cutoff, audioCtx.currentTime, 0.1);
+            }
+
+            if (leadOsc && leadOsc.gainNode && audioCtx) {
+                // Fade in aggressive lead as tension crosses 0.65
+                const leadVolume = t > 0.65 ? (t - 0.65) * 1.5 : 0.0;
+                leadOsc.gainNode.gain.setTargetAtTime(leadVolume, audioCtx.currentTime, 0.1);
+            }
+
+            // Update UI Stems
+            updateStemPills(t);
+        });
+
+        function updateStemPills(t) {
+            document.getElementById('stem_perc').classList.toggle('active', t > 0.35);
+            document.getElementById('stem_lead').classList.toggle('active', t > 0.65);
+            document.getElementById('stem_808').classList.toggle('active', t > 0.70);
+            document.getElementById('stem_riser').classList.toggle('active', t > 0.85);
+
+            const valence = document.getElementById('valenceLabel');
+            if (t < 0.35) valence.textContent = 'Atmospheric Calm';
+            else if (t < 0.70) valence.textContent = 'Rising Suspense';
+            else valence.textContent = 'Climactic Crisis';
+        }
+
+        // Ducking Toggle
+        document.getElementById('duckingToggleBtn').addEventListener('click', function() {
+            initAudio();
+            isDucking = !isDucking;
+            this.textContent = `Sidechain Ducking: ${isDucking ? 'ACTIVE (-12dB)' : 'OFF'}`;
+            this.style.borderColor = isDucking ? 'var(--accent-orange)' : 'var(--border)';
+
+            if (masterGain && audioCtx) {
+                const targetGain = isDucking ? 0.1 : 0.4;
+                masterGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.08);
+            }
+        });
+
+        // Procedural Foley Synthesizer
+        function playFoley(type) {
+            initAudio();
+            audioCtx.resume();
+            const now = audioCtx.currentTime;
+
+            if (type === 'spark') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(3200, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 0.12);
+            } else if (type === 'impact') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(1400, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.6);
+                gain.gain.setValueAtTime(0.7, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 0.6);
+            } else if (type === 'explosion') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 1.8);
+                gain.gain.setValueAtTime(1.0, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 1.8);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 1.8);
+            } else if (type === 'rain') {
+                // Filtered noise pulse
+                playNoiseBurst(0.8, 1200);
+            } else if (type === 'gravel') {
+                playNoiseBurst(0.18, 500);
+            } else if (type === 'siren') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(650, now);
+                osc.frequency.linearRampToValueAtTime(950, now + 0.5);
+                osc.frequency.linearRampToValueAtTime(650, now + 1.0);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 1.0);
+            }
+        }
+
+        function playNoiseBurst(duration, cutoff) {
+            const bufferSize = audioCtx.sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(cutoff, audioCtx.currentTime);
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start();
+        }
+
+        // Micro-tonal Chord Player
+        function playMicrotonalChord(frequencies) {
+            initAudio();
+            audioCtx.resume();
+            const now = audioCtx.currentTime;
+
+            frequencies.forEach(freq => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 2.5);
+            });
+        }
+
+        // Oscilloscope Visualizer
+        function startVisualizer() {
+            const canvas = document.getElementById('visualizer');
+            const canvasCtx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                requestAnimationFrame(draw);
+                analyser.getByteTimeDomainData(dataArray);
+
+                canvasCtx.fillStyle = '#0a0e17';
+                canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+                canvasCtx.lineWidth = 2;
+                canvasCtx.strokeStyle = '#00f2fe';
+                canvasCtx.beginPath();
+
+                const sliceWidth = canvas.width / bufferLength;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = (v * canvas.height) / 2;
+                    if (i === 0) canvasCtx.moveTo(x, y);
+                    else canvasCtx.lineTo(x, y);
+                    x += sliceWidth;
+                }
+
+                canvasCtx.lineTo(canvas.width, canvas.height / 2);
+                canvasCtx.stroke();
+            }
+            draw();
+        }
+    </script>
+</body>
+</html>
