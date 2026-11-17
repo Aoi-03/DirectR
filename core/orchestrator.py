@@ -8,12 +8,6 @@ from typing import Optional
 from .schemas import ProjectBrief, ProductionPackage
 from .event_bus import EventBus
 
-# Lazy/dynamic imports for decoupled modules
-from modules.narrative_screenplay.engine import NarrativeScreenplayEngine
-from modules.visual_art_design.engine import VisualArtEngine
-from modules.audio_soundscapes.engine import AudioStudioEngine
-from modules.creator_distribution.engine import CreatorDistributionEngine
-
 logger = logging.getLogger("DirectR.Orchestrator")
 
 
@@ -23,6 +17,12 @@ class DirectROrchestrator:
     """
 
     def __init__(self, event_bus: Optional[EventBus] = None):
+        # Lazy imports for decoupled modules
+        from modules.narrative_screenplay.engine import NarrativeScreenplayEngine
+        from modules.visual_art_design.engine import VisualArtEngine
+        from modules.audio_soundscapes.engine import AudioStudioEngine
+        from modules.creator_distribution.engine import CreatorDistributionEngine
+
         self.bus = event_bus or EventBus()
         self.narrative_engine = NarrativeScreenplayEngine(self.bus)
         self.visual_engine = VisualArtEngine(self.bus)
