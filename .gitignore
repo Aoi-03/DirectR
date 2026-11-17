@@ -2,19 +2,22 @@
 # DirectR .gitignore
 # ==========================================
 
-# Ignore all images and screenshots
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.webp
-*.bmp
-*.tiff
-*.ico
-*.svg.bak
+# Ignore screenshots and loose media in root
 Screenshot*
+*.svg.bak
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.webp
+/*.bmp
+/*.tiff
+/*.ico
 
-# Python
+# Allow UI web assets for direct-r-production-studio
+!direct-r-production-studio/public/**
+
+# Python virtual environment & cache
 __pycache__/
 *.py[cod]
 *$py.class
@@ -30,8 +33,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/

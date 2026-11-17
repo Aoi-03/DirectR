@@ -78,6 +78,11 @@ DirectR/
 │   ├── schemas.py                      # Inter-module data schemas (Pydantic)
 │   ├── event_bus.py                    # Realtime inter-module pub/sub bus
 │   └── orchestrator.py                 # Multi-agent swarm pipeline runner
+├── direct-r-production-studio/         # Full-Stack Next.js Studio Web UI
+│   ├── app/                            # Workstation layout & studio panels
+│   ├── components/                     # Radix & Lucide UI components
+│   ├── lib/                            # Helper utilities
+│   └── public/                         # Concept art & turnaround assets
 ├── modules/
 │   ├── narrative_screenplay/           # Module 1: Storytelling & Screenplay
 │   │   ├── README.md                   # Task specs & documentation
@@ -145,8 +150,22 @@ python main.py
 
 ### 5. Run Unit Tests Across All Modules
 ```bash
-pytest
+python -m unittest discover -s . -p "test_*.py" -v
 ```
+
+### 6. Launch the DirectR Production Studio Web UI
+Experience the full-studio interactive frontend uniting all 4 tracks:
+```bash
+cd direct-r-production-studio
+pnpm install
+pnpm dev
+```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser to:
+- Adjust the **Master Dramatic Tension slider** (0.00 – 1.00) to dynamically modulate narrative mood, visual lighting, audio tempo (BPM), and viral reel hooks in real time.
+- Explore **Module 1 (Narrative)**: Hollywood script formatting, character psychology constraints, LoreBible fact viewer, and reactive NPC generator.
+- Explore **Module 2 (Visuals)**: 4-angle character turnarounds with rig-ready topology wireframe toggle and editable SVG vector stacks.
+- Explore **Module 3 (Audio)**: Real-time 5-stem audio mixer, sidechain dialogue ducking (-12 dB), zero-shot Foley soundboard, and 24-EDO microtonal chords.
+- Explore **Module 4 (Creator)**: 9:16 vertical viral reel mockup, A/B/C thumbnail visual gaze heatmaps (CTR predictor), and autonomous community response inbox.
 
 ---
 
