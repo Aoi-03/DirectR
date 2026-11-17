@@ -13,8 +13,8 @@ class TestGeminiAudioEngine(unittest.TestCase):
 
     def test_initialization_and_models(self):
         self.assertIsNotNone(self.gemini.SUPPORTED_MODELS)
-        self.assertIn("gemini-2.5-flash", self.gemini.SUPPORTED_MODELS)
-        self.assertIn("gemini-1.5-flash", self.gemini.SUPPORTED_MODELS)
+        self.assertIn("gemini-3-flash-preview", self.gemini.SUPPORTED_MODELS)
+        self.assertIn("gemini-flash-latest", self.gemini.SUPPORTED_MODELS)
 
     def test_json_cleaner(self):
         raw_markdown = '```json\n{\n  "tempo_bpm": 128,\n  "key": "D Minor"\n}\n```'
