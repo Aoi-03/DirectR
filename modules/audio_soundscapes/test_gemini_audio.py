@@ -22,15 +22,24 @@ class TestGeminiAudioEngine(unittest.TestCase):
         self.assertEqual(parsed.get("tempo_bpm"), 128)
         self.assertEqual(parsed.get("key"), "D Minor")
 
-    def test_live_gemini_soundscape_generation(self):
-        """
-        Runs live test when GEMINI_API_KEY is configured in .env.
-        If key is not set, skips gracefully.
-        """
+    def _check_live_prerequisites(self):
         if not self.gemini.is_configured():
             self.skipTest(
                 "GEMINI_API_KEY not found in .env yet. Paste your key into .env to execute live test."
             )
+        import socket
+        try:
+            socket.create_connection(("generativelanguage.googleapis.com", 443), timeout=3)
+        except (socket.error, OSError):
+            self.skipTest(
+                "No active internet connection to Google Gemini API (offline or sandboxed). Skipping live call."
+            )
+
+    def test_live_gemini_soundscape_generation(self):
+        """
+        Runs live test when GEMINI_API_KEY is configured and internet is reachable.
+        """
+        self._check_live_prerequisites()
 
         print("\n🚀 Executing LIVE Gemini Soundscape Composition Call...")
         result = self.gemini.generate_soundscape_composition(
@@ -50,12 +59,9 @@ class TestGeminiAudioEngine(unittest.TestCase):
 
     def test_live_gemini_foley_design(self):
         """
-        Runs live Foley sound design test when GEMINI_API_KEY is configured in .env.
+        Runs live Foley sound design test when GEMINI_API_KEY is configured and internet is reachable.
         """
-        if not self.gemini.is_configured():
-            self.skipTest(
-                "GEMINI_API_KEY not found in .env yet. Paste your key into .env to execute live test."
-            )
+        self._check_live_prerequisites()
 
         print("\n🚀 Executing LIVE Gemini Zero-Shot Foley Design Call...")
         result = self.gemini.design_zero_shot_foley(
@@ -72,12 +78,9 @@ class TestGeminiAudioEngine(unittest.TestCase):
 
     def test_live_gemini_microtonal_harmony(self):
         """
-        Runs live microtonal chord design test when GEMINI_API_KEY is configured in .env.
+        Runs live microtonal chord design test when GEMINI_API_KEY is configured and internet is reachable.
         """
-        if not self.gemini.is_configured():
-            self.skipTest(
-                "GEMINI_API_KEY not found in .env yet. Paste your key into .env to execute live test."
-            )
+        self._check_live_prerequisites()
 
         print("\n🚀 Executing LIVE Gemini Microtonal Harmony Call...")
         result = self.gemini.design_microtonal_harmony(
