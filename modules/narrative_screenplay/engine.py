@@ -22,8 +22,12 @@ Tech stack used (pure-Python, no external LLM calls needed to pass tests):
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
+import os
 import re
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -37,6 +41,76 @@ from core.schemas import (
 from core.event_bus import EventBus
 
 logger = logging.getLogger("DirectR.NarrativeEngine")
+
+
+# ---------------------------------------------------------------------------
+# NVIDIA Nemotron LLM Client
+# ---------------------------------------------------------------------------
+
+class NemotronNarrativeClient:
+    """
+    Client for NVIDIA's Nemotron-3-Ultra-550B (or compatible models) via NVIDIA NIM.
+    Used for intelligent dialect-adaptive dialogue and reactive NPC backstory generation.
+    Gracefully falls back when API key is unset or network calls fail.
+    """
+
+    DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b"
+    API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
+
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+        self.api_key = api_key or os.getenv("NVIDIA_API_KEY")
+        self.model = model or self.DEFAULT_MODEL
+
+    @property
+    def is_available(self) -> bool:
+        return bool(self.api_key and self.api_key.startswith("nvapi-"))
+
+    def generate(
+        self,
+        prompt: str,
+        system_prompt: str = "You are an elite narrative screenplay writer and world builder.",
+        temperature: float = 0.7,
+        max_tokens: int = 512,
+    ) -> Optional[str]:
+        """
+        Invoke Nemotron chat completion. Returns None on network error, missing key, or timeout.
+        Extracts message content (preferring 'content', with fallback to 'reasoning_content').
+        """
+        if not self.is_available:
+            return None
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "DirectR/1.0",
+        }
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+
+        try:
+            req = urllib.request.Request(
+                self.API_URL,
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                choice = data["choices"][0]["message"]
+                content = choice.get("content")
+                if not content:
+                    content = choice.get("reasoning_content")
+                return content.strip() if content else None
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError, KeyError, IndexError) as err:
+            logger.warning("[NemotronClient] API call failed: %s. Using procedural fallback.", err)
+            return None
 
 
 # ---------------------------------------------------------------------------
@@ -623,13 +697,14 @@ class NarrativeScreenplayEngine:
         ("NeonHum",       "Faint electrical hum from flickering neon sign",   5.5),
     ]
 
-    def __init__(self, event_bus: Optional[EventBus] = None) -> None:
+    def __init__(self, event_bus: Optional[EventBus] = None, nvidia_api_key: Optional[str] = None) -> None:
         self.bus = event_bus
         self.lore: Optional[LoreBible] = None
         self.memory_tree = NodeMemoryTree()
         self._dialect_engine = DialectEngine()
         self._validator: Optional[BranchingPathValidator] = None
         self._npc_sandbox: Optional[NPCBackstorySandbox] = None
+        self.nemotron = NemotronNarrativeClient(api_key=nvidia_api_key)
 
     # ------------------------------------------------------------------
     # Public API — Seed Inspiration 2: Dialect Adaptation
@@ -697,6 +772,7 @@ class NarrativeScreenplayEngine:
         relationship_to_protagonist: str,
         setting: str,
         protagonist_id: Optional[str] = None,
+        use_llm: bool = True,
     ) -> Dict[str, Any]:
         """
         Autonomous narrative sandbox generator for reactive NPC backstories
@@ -705,9 +781,49 @@ class NarrativeScreenplayEngine:
         if self._npc_sandbox is None:
             lore = self.lore or LoreBible(project_id="default")
             self._npc_sandbox = NPCBackstorySandbox(lore, self.memory_tree)
-        return self._npc_sandbox.generate(
+        
+        # Base procedural template
+        backstory = self._npc_sandbox.generate(
             npc_name, relationship_to_protagonist, setting, protagonist_id
         )
+
+        # Enhance with Nemotron-3-Ultra-550B if enabled and reachable
+        if use_llm and self.nemotron.is_available:
+            prompt = (
+                f"NPC Name: {npc_name}\n"
+                f"Relationship to Protagonist: {relationship_to_protagonist}\n"
+                f"Setting: {setting}\n"
+                f"Faction: {backstory.get('faction')}\n"
+                f"Create a high-tension secret motivation and a visceral backstory memory.\n"
+                f"Output strictly a JSON object with keys 'motivation' and 'memory_node'."
+            )
+            llm_res = self.nemotron.generate(
+                prompt=prompt,
+                system_prompt="You are an elite narrative engine. Output strictly a JSON object with keys 'motivation' and 'memory_node'. No introductory or concluding text.",
+                temperature=0.7,
+                max_tokens=600,
+            )
+            if llm_res:
+                try:
+                    clean = llm_res.strip()
+                    if "```json" in clean:
+                        clean = clean.split("```json")[-1].split("```")[0].strip()
+                    elif "```" in clean:
+                        clean = clean.split("```")[-1].split("```")[0].strip()
+                    # Find outer curly braces
+                    start = clean.find("{")
+                    end = clean.rfind("}")
+                    if start != -1 and end != -1:
+                        clean = clean[start : end + 1]
+                    parsed = json.loads(clean)
+                    if "motivation" in parsed and parsed["motivation"]:
+                        backstory["secret_motivation"] = parsed["motivation"]
+                    if "memory_node" in parsed and parsed["memory_node"]:
+                        backstory["memory_tree_nodes"].insert(0, f"[Nemotron AI] {parsed['memory_node']}")
+                except Exception as err:
+                    logger.debug("[NPCBackstory] Could not parse LLM JSON: %s", err)
+
+        return backstory
 
     def generate_npc_relationship_web(
         self, npc_names: List[str], setting: str
