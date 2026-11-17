@@ -24,9 +24,10 @@ class GeminiAudioEngine:
     """
 
     SUPPORTED_MODELS = [
+        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-flash-latest",
         "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
     ]
 
     def __init__(self, api_key: Optional[str] = None):
@@ -88,6 +89,8 @@ class GeminiAudioEngine:
         # Method 2: Direct REST fallback via requests
         import requests
         headers = {"Content-Type": "application/json"}
+        last_error = None
+
         for model_name in self.SUPPORTED_MODELS:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.api_key}"
             payload: Dict[str, Any] = {
@@ -97,17 +100,22 @@ class GeminiAudioEngine:
                 payload["systemInstruction"] = {"parts": [{"text": system_instruction}]}
 
             try:
-                res = requests.post(url, headers=headers, json=payload, timeout=25)
+                res = requests.post(url, headers=headers, json=payload, timeout=40)
                 if res.status_code == 200:
                     data = res.json()
                     text = data["candidates"][0]["content"]["parts"][0]["text"]
                     self._active_model = model_name
                     return text
+                else:
+                    last_error = f"{model_name} HTTP {res.status_code}: {res.text[:200]}"
+                    logger.debug(f"REST call to {model_name} returned error: {last_error}")
             except Exception as ex:
+                last_error = f"{model_name} error: {ex}"
                 logger.debug(f"REST call to {model_name} failed: {ex}")
 
+        error_details = f" Last response: {last_error}" if last_error else ""
         raise RuntimeError(
-            "Failed to generate content from Gemini API across all supported models. Please check your API key and network connection."
+            f"Failed to generate content from Gemini API across models {self.SUPPORTED_MODELS}.{error_details}"
         )
 
     # -------------------------------------------------------------------------
