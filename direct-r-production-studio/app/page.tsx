@@ -1,24 +1,89 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowRight, AudioLines, Bell, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clapperboard, Clock3, Database, Download, Eye, EyeOff, Film, FolderOpen, Gauge, Headphones, House, Layers3, MessageCircle, Mic2, MoreHorizontal, Music2, Play, Plus, Radio, Search, Send, SlidersHorizontal, Sparkles, Volume2, WandSparkles, Zap } from 'lucide-react'
+import { Activity, ArrowRight, AudioLines, Bell, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clapperboard, Clock3, Database, Download, Eye, EyeOff, Film, FolderOpen, Gauge, Headphones, House, Layers3, MessageCircle, Mic2, MoreHorizontal, Music2, Play, Plus, Radio, RefreshCw, Search, Send, SlidersHorizontal, Sparkles, Volume2, WandSparkles, Zap } from 'lucide-react'
 
 type Tab = 'Full Studio View' | '1. Screenplay & Lore' | '2. Visual & 3D Art' | '3. Audio & Soundscapes' | '4. Distribution Hub'
 const tabs: Tab[] = ['Full Studio View', '1. Screenplay & Lore', '2. Visual & 3D Art', '3. Audio & Soundscapes', '4. Distribution Hub']
-const scenes = ['Inciting Encounter', 'The Vault Revelation', 'The Aftermath']
-const stems = ['Ambient Sub-Drone', 'Atmospheric Pad', 'Rhythm Percussion', 'Distorted 808 Bass', 'Screaming Lead Synth']
+const defaultScenes = ['The Inciting Encounter', 'The Revelation & Confrontation', 'The Aftermath & Next Frontier']
+const defaultStems = ['Ambient Sub-Drone', 'Atmospheric Pad', 'Rhythm Percussion', 'Distorted 808 Bass', 'Screaming Lead Synth']
 
 function Panel({ title, eyebrow, icon: Icon, children, className = '' }: { title: string; eyebrow: string; icon: typeof Activity; children: React.ReactNode; className?: string }) {
   return <section className={`panel ${className}`}><div className="panel-head"><div className="panel-title-icon"><span className="panel-icon"><Icon size={15} /></span><div><div className="eyebrow">{eyebrow}</div><h2>{title}</h2></div></div><button className="icon-button" aria-label={`More ${title} options`} title="Panel options"><MoreHorizontal size={17} /></button></div>{children}</section>
 }
 
-function Header({ tension, setTension, onRun, onExport }: { tension: number; setTension: (v: number) => void; onRun: () => void; onExport: () => void }) {
+function Header({ tension, setTension, onRun, onExport, backendConnected }: { tension: number; setTension: (v: number) => void; onRun: () => void; onExport: () => void; backendConnected: boolean }) {
   const mood = tension > .78 ? 'Climactic Crisis' : tension > .5 ? 'Rising Dread' : tension > .28 ? 'Unsettled' : 'Quiet Tension'
-  return <header className="topbar"><div className="brand-area"><div className="brand-mark"><Clapperboard size={17} strokeWidth={2.2} /></div><div className="brand-name">Direct<span>R</span></div><div className="active-pill"><i /> SWARM ACTIVE</div></div><button className="project-select"><span className="project-kicker">CURRENT PROJECT</span><strong>Chronicles of Neo-Aethel <ChevronDown size={13} /></strong><small>Cyberpunk Sci-Fi Fantasy <b>·</b> 5 min <b>·</b> 3 scenes <b>·</b> 2 characters</small></button><div className="pipeline"><div className="pipeline-label"><Activity size={12} /> AGENT PIPELINE</div><div className="pipeline-nodes"><span><i className="dot cyan" />Narrative <small>Idle</small></span><b>›</b><span><i className="dot pink" />Visual <small>Ready</small></span><b>›</b><span><i className="dot amber" />Audio <small>Synced</small></span><b>›</b><span><i className="dot green" />Creator <small>Online</small></span></div></div><div className="header-actions"><div className="tension-control"><div className="tension-label"><span>MASTER TENSION</span><strong>{tension.toFixed(2)} <em>— {mood}</em></strong></div><input aria-label="Global dramatic tension" type="range" min="0" max="1" step="0.01" value={tension} onChange={e => setTension(Number(e.target.value))} style={{'--range-fill': `${tension * 100}%`} as React.CSSProperties} /></div><button className="export-button" onClick={onExport} title="Download production package"><Download size={14} /> Export</button><button className="run-button" onClick={onRun}><Play size={13} fill="currentColor" /> Run Swarm</button></div></header>
+  return <header className="topbar"><div className="brand-area"><div className="brand-mark"><Clapperboard size={17} strokeWidth={2.2} /></div><div className="brand-name">Direct<span>R</span></div><div className="active-pill" style={{ color: backendConnected ? '#10b981' : '#f59e0b' }}><i style={{ background: backendConnected ? '#10b981' : '#f59e0b' }} /> {backendConnected ? 'BACKEND LIVE' : 'DEMO MODE'}</div></div><button className="project-select"><span className="project-kicker">CURRENT PROJECT</span><strong>Chronicles of Neo-Aethel <ChevronDown size={13} /></strong><small>Cyberpunk Sci-Fi Fantasy <b>·</b> 5 min <b>·</b> 3 scenes <b>·</b> 2 characters</small></button><div className="pipeline"><div className="pipeline-label"><Activity size={12} /> AGENT PIPELINE</div><div className="pipeline-nodes"><span><i className="dot cyan" />Narrative <small>{backendConnected ? 'Ready' : 'Mock'}</small></span><b>›</b><span><i className="dot pink" />Visual <small>Ready</small></span><b>›</b><span><i className="dot amber" />Audio <small>{backendConnected ? 'Live' : 'Mock'}</small></span><b>›</b><span><i className="dot green" />Creator <small>Online</small></span></div></div><div className="header-actions"><div className="tension-control"><div className="tension-label"><span>MASTER TENSION</span><strong>{tension.toFixed(2)} <em>— {mood}</em></strong></div><input aria-label="Global dramatic tension" type="range" min="0" max="1" step="0.01" value={tension} onChange={e => setTension(Number(e.target.value))} style={{'--range-fill': `${tension * 100}%`} as React.CSSProperties} /></div><button className="export-button" onClick={onExport} title="Download production package"><Download size={14} /> Export</button><button className="run-button" onClick={onRun}><Play size={13} fill="currentColor" /> Run Swarm</button></div></header>
 }
 
-function NarrativePanel({ scene, setScene, onNpc }: { scene: number; setScene: (v: number) => void; onNpc: () => void }) {
-  return <Panel title="Story & screenplay" eyebrow="01 / NARRATIVE AGENT" icon={Clapperboard} className="narrative-panel"><div className="scene-tabs">{scenes.map((item, i) => <button key={item} onClick={() => setScene(i)} className={scene === i ? 'scene-tab selected' : 'scene-tab'}><span>0{i + 1}</span>{item}</button>)}</div><div className="script-sheet"><div className="script-meta"><span>INT. {scene === 1 ? 'THE UNDERCITY VAULT' : scene === 2 ? 'NEO-AETHEL — EASTERN DISTRICT' : 'RAIN-SOAKED TRANSIT STATION'}</span><span>DAY · CONTINUOUS</span></div><p className="action-copy">{scene === 0 ? 'Rain needles the neon haze. LYRA VANCE stops beneath a flickering transit sign. Across the platform, a figure steps out of the static.' : scene === 1 ? 'A cathedral of black glass opens beneath the city. The vault hums — a thousand voices folded into one impossible note.' : 'The storm has passed. Lyra watches dawn fracture across the skyline, carrying the weight of what they uncovered.'}</p><div className="character-cue">LYRA VANCE <span>(barely above a whisper)</span></div><p className="dialogue">{scene === 0 ? 'You followed me through three districts. Either you have something worth saying, or you have a death wish.' : scene === 1 ? 'It was never a weapon. It was a witness. And it remembers every name they erased.' : 'We don’t get to choose what the truth costs. Only whether we leave it buried.'}</p><div className="character-cue second">KAELEN CROSS <span>(measured, guarded)</span></div><p className="dialogue second-line">“I’m not asking you to trust me. Just trust what you heard.”</p><div className="script-footer"><span className="tag cyan-tag">● EMOTIONAL VALENCE: TENSE</span><span className="tag">DIALECT: LOWER-DISTRICT</span></div></div><div className="narrative-bottom"><div className="integrity"><div className="avatar lyra">L</div><div><strong>Lyra Vance</strong><small><Check size={10} /> Never betrays allies · intact</small></div><div className="avatar kaelen">K</div><div><strong>Kaelen Cross</strong><small><Check size={10} /> Distrusts governance · active</small></div></div><button className="npc-button" onClick={onNpc}><Sparkles size={13} /> Generate NPC</button></div></Panel>
+function NarrativePanel({ scene, setScene, onNpc, backendScenes, loading }: { scene: number; setScene: (v: number) => void; onNpc: () => void; backendScenes: any[]; loading?: boolean }) {
+  const currentScene = backendScenes[scene] || null
+  const sceneTitle = currentScene ? currentScene.title : defaultScenes[scene] || `Scene 0${scene + 1}`
+  const location = currentScene ? currentScene.location : (scene === 1 ? 'Underground Cipher Vault' : scene === 2 ? 'Overlook Tower' : 'District 9 Lower Alleyway')
+  const action = currentScene ? currentScene.action_description : (scene === 0 ? 'Rain needles the neon haze. LYRA VANCE stops beneath a flickering transit sign. Across the platform, a figure steps out of the static.' : scene === 1 ? 'Sparks fly from severed cables as security alarms blare in sync with the strobe lights.' : 'The storm has passed. Lyra watches dawn fracture across the skyline, carrying the weight of what they uncovered.')
+  const dialogues = currentScene?.dialogue || []
+
+  return (
+    <Panel title="Story & Screenplay (Module 1)" eyebrow="01 / NARRATIVE AGENT (NVIDIA NEMOTRON)" icon={Clapperboard} className="narrative-panel">
+      <div className="scene-tabs">
+        {(backendScenes.length > 0 ? backendScenes : defaultScenes).map((item, i) => {
+          const title = typeof item === 'string' ? item : item.title
+          return (
+            <button key={i} onClick={() => setScene(i)} className={scene === i ? 'scene-tab selected' : 'scene-tab'}>
+              <span>0{i + 1}</span>{title}
+            </button>
+          )
+        })}
+      </div>
+      <div className="script-sheet">
+        <div className="script-meta">
+          <span>INT. {location.toUpperCase()}</span>
+          <span>{currentScene?.setting_time || 'NIGHT'} · CONTINUOUS</span>
+        </div>
+        <p className="action-copy">{action}</p>
+
+        {dialogues.length > 0 ? (
+          dialogues.map((dl: any, idx: number) => (
+            <div key={idx} style={{ marginBottom: '12px' }}>
+              <div className={`character-cue ${idx > 0 ? 'second' : ''}`}>
+                {dl.speaker.toUpperCase()} <span>({dl.emotion} {dl.delivery_note ? `· ${dl.delivery_note}` : ''})</span>
+              </div>
+              <p className={`dialogue ${idx > 0 ? 'second-line' : ''}`}>
+                “{dl.line}”
+              </p>
+            </div>
+          ))
+        ) : (
+          <>
+            <div className="character-cue">LYRA VANCE <span>(whispered · dialect adapted)</span></div>
+            <p className="dialogue">
+              “{scene === 0 ? "We can't stay here much longer. The perimeter is breached." : scene === 1 ? "Look closely at the cipher data. It doesn't lie!" : "We made it. I can't believe we are still standing."}”
+            </p>
+          </>
+        )}
+
+        <div className="script-footer">
+          <span className="tag cyan-tag">● TENSION: {(currentScene?.tension_score ?? (scene === 1 ? 0.85 : scene === 2 ? 0.55 : 0.3)).toFixed(2)}</span>
+          <span className="tag">DIALECT ENGINE: REALTIME</span>
+          {currentScene?.foley_cues && currentScene.foley_cues.length > 0 && (
+            <span className="tag amber-tag">FOLEY: {currentScene.foley_cues.length} CUES</span>
+          )}
+        </div>
+      </div>
+      <div className="narrative-bottom">
+        <div className="integrity">
+          <div className="avatar lyra">L</div>
+          <div><strong>Lyra Vance</strong><small><Check size={10} /> Psychology: Historical records preserved</small></div>
+          <div className="avatar kaelen">K</div>
+          <div><strong>Kaelen Cross</strong><small><Check size={10} /> Psychology: Crew protection active</small></div>
+        </div>
+        <button className="npc-button" onClick={onNpc} disabled={loading}>
+          <Sparkles size={13} /> {loading ? 'Synthesizing...' : 'Generate Reactive NPC'}
+        </button>
+      </div>
+    </Panel>
+  )
 }
 
 function VisualPanel({ tension }: { tension: number }) {
@@ -27,16 +92,64 @@ function VisualPanel({ tension }: { tension: number }) {
   const [layers, setLayers] = useState([true, true, true, true])
   const views = ['Front', '3/4 Perspective', 'Profile Side', 'Back View']
   const names = ['Background plate', 'Midground structures', 'Character layers', 'Neon lighting overlay']
-  return <Panel title="Visual development" eyebrow="02 / VISUAL AGENT" icon={Layers3} className="visual-panel"><div className="art-tabs">{views.map(v => <button key={v} onClick={() => setView(v)} className={view === v ? 'art-tab active' : 'art-tab'}>{v}</button>)}<button className={wire ? 'wire-button on' : 'wire-button'} onClick={() => setWire(!wire)}><Activity size={12} /> Wireframe</button></div><div className="artwork"><img src="/lyra-neon.png" alt="Concept art of Lyra Vance in the rain-lit streets of Neo-Aethel" style={{filter: `saturate(${.82 + tension * .5}) hue-rotate(${tension * -12}deg)`}} />{wire && <div className="wire-overlay" aria-label="Rig-ready topology overlay"><span>RIG-READY TOPOLOGY</span><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div>}<div className="art-view-label">TURNAROUND / {view.toUpperCase()}</div><div className="art-count">16 <small>ANCHOR NODES</small></div></div><div className="layers-row"><strong>SVG LAYERS</strong><span>VECTOR EDITABLE</span></div><div className="layer-list">{names.map((name, i) => <div key={name} className="layer-item"><button onClick={() => setLayers(layers.map((v, n) => n === i ? !v : v))} aria-label={`${layers[i] ? 'Hide' : 'Show'} ${name}`}>{layers[i] ? <Eye size={13} /> : <EyeOff size={13} />}</button><span className="layer-handle">⠿</span>{name}<i className={`layer-color lc-${i}`} /></div>)}</div><div className="story-strip"><div className="strip-heading">STORYBOARD <span>03 FRAMES</span></div><div className="story-frames">{scenes.map((s, i) => <button className="story-frame" key={s}><img src="/lyra-neon.png" alt="" style={{objectPosition: `${30 + i * 30}% center`, filter: `hue-rotate(${i * 12}deg)`}} /><span>0{i + 1}</span><small>{s}</small></button>)}</div></div></Panel>
+  return <Panel title="Visual development" eyebrow="02 / VISUAL AGENT" icon={Layers3} className="visual-panel"><div className="art-tabs">{views.map(v => <button key={v} onClick={() => setView(v)} className={view === v ? 'art-tab active' : 'art-tab'}>{v}</button>)}<button className={wire ? 'wire-button on' : 'wire-button'} onClick={() => setWire(!wire)}><Activity size={12} /> Wireframe</button></div><div className="artwork"><img src="/lyra-neon.png" alt="Concept art of Lyra Vance in the rain-lit streets of Neo-Aethel" style={{filter: `saturate(${.82 + tension * .5}) hue-rotate(${tension * -12}deg)`}} />{wire && <div className="wire-overlay" aria-label="Rig-ready topology overlay"><span>RIG-READY TOPOLOGY</span><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div>}<div className="art-view-label">TURNAROUND / {view.toUpperCase()}</div><div className="art-count">16 <small>ANCHOR NODES</small></div></div><div className="layers-row"><strong>SVG LAYERS</strong><span>VECTOR EDITABLE</span></div><div className="layer-list">{names.map((name, i) => <div key={name} className="layer-item"><button onClick={() => setLayers(layers.map((v, n) => n === i ? !v : v))} aria-label={`${layers[i] ? 'Hide' : 'Show'} ${name}`}>{layers[i] ? <Eye size={13} /> : <EyeOff size={13} />}</button><span className="layer-handle">⠿</span>{name}<i className={`layer-color lc-${i}`} /></div>)}</div><div className="story-strip"><div className="strip-heading">STORYBOARD <span>03 FRAMES</span></div><div className="story-frames">{defaultScenes.map((s, i) => <button className="story-frame" key={s}><img src="/lyra-neon.png" alt="" style={{objectPosition: `${30 + i * 30}% center`, filter: `hue-rotate(${i * 12}deg)`}} /><span>0{i + 1}</span><small>{s}</small></button>)}</div></div></Panel>
 }
 
-function AudioPanel({ tension }: { tension: number }) {
+function AudioPanel({ tension, activeStems, liveBpm, foleyList }: { tension: number; activeStems: string[]; liveBpm?: number; foleyList?: any[] }) {
   const [levels, setLevels] = useState([70, 58, 42, 63, 36])
   const [preset, setPreset] = useState('Uncanny Neutral 3rd')
   const [playing, setPlaying] = useState('')
-  const bpm = Math.round(65 + tension * 85)
-  const foley = ['Electric sparks', 'Rain on steel', 'Boot on gravel', 'Metallic clang', 'Sub shockwave']
-  return <Panel title="Music & sound design" eyebrow="03 / AUDIO STUDIO" icon={AudioLines} className="audio-panel"><div className="audio-topline"><div><span className="eyebrow">SESSION TEMPO</span><strong className="bpm">{bpm}<small> BPM</small></strong></div><div className="audio-live"><i /> LIVE MIX</div><div className="sidechain"><span className="led" /> DIALOGUE DUCKING <b>−12 dB</b></div></div><div className="mixer">{stems.map((name, i) => <div className="channel" key={name}><div className="vu"><i style={{height: `${18 + ((i * 13 + bpm) % 63)}%`}} /><i style={{height: `${28 + ((i * 19 + bpm) % 58)}%`}} /><i style={{height: `${14 + ((i * 11 + bpm) % 66)}%`}} /></div><div className="fader-wrap"><input type="range" min="0" max="100" value={levels[i] + (i > 1 ? tension * 12 : 0)} aria-label={`${name} volume`} onChange={e => setLevels(levels.map((v, n) => n === i ? Number(e.target.value) : v))} style={{'--range-fill': `${levels[i]}%`} as React.CSSProperties} /><div className="fader-track" /></div><span className="channel-name">{name}</span><span className="channel-db">{(levels[i] / 10 - 10).toFixed(1)} dB</span></div>)}</div><div className="audio-divider" /><div className="foley-section"><div className="foley-title"><span>ZERO-SHOT FOLEY</span><small>CLICK TO PREVIEW</small></div><div className="foley-buttons">{foley.map((sound, i) => <button key={sound} onClick={() => { setPlaying(sound); window.setTimeout(() => setPlaying(''), 1100) }} className={playing === sound ? 'foley-button playing' : 'foley-button'} title={`Preview ${sound}`}><span>{['ϟ', '〰', '⌁', '⌘', '◉'][i]}</span>{sound}</button>)}</div></div><div className="harmony"><div className="foley-title"><span>24-EDO HARMONY</span><small>MICROTONAL TUNING</small></div><div className="harmony-options">{['Uncanny Neutral 3rd', 'Dystopian Paranoia', 'Cyber Mysticism', 'Crisis Cluster'].map((label, i) => <button key={label} onClick={() => setPreset(label)} className={preset === label ? 'harmony-chip chosen' : 'harmony-chip'}>{label}<small>{['350¢ · 261.63 Hz', '150¢ · 233.08 Hz', '470¢ · 277.18 Hz', '100¢ · 220.00 Hz'][i]}</small></button>)}</div></div></Panel>
+  const bpm = liveBpm || Math.round(65 + tension * 85)
+  const stemsToShow = activeStems && activeStems.length > 0 ? activeStems : defaultStems
+  const foley = foleyList && foleyList.length > 0 ? foleyList.map((f: any) => f.cue_name || f.cue) : ['SparksSizzle', 'RainOnRoof', 'VaultHum', 'SirenWail', 'HeartbeatPulse']
+
+  return (
+    <Panel title="Music & Sound Design (Module 3)" eyebrow="03 / AUDIO STUDIO (STEMS & FOLEY)" icon={AudioLines} className="audio-panel">
+      <div className="audio-topline">
+        <div><span className="eyebrow">SESSION TEMPO</span><strong className="bpm">{bpm}<small> BPM</small></strong></div>
+        <div className="audio-live"><i /> ADAPTIVE TENSION MIX</div>
+        <div className="sidechain"><span className="led" /> DIALOGUE DUCKING <b>−12 dB</b></div>
+      </div>
+      <div className="mixer">
+        {stemsToShow.map((name, i) => (
+          <div className="channel" key={name}>
+            <div className="vu">
+              <i style={{height: `${18 + ((i * 13 + bpm) % 63)}%`}} />
+              <i style={{height: `${28 + ((i * 19 + bpm) % 58)}%`}} />
+              <i style={{height: `${14 + ((i * 11 + bpm) % 66)}%`}} />
+            </div>
+            <div className="fader-wrap">
+              <input type="range" min="0" max="100" value={levels[i % levels.length] + (i > 1 ? tension * 12 : 0)} aria-label={`${name} volume`} onChange={e => setLevels(levels.map((v, n) => n === (i % levels.length) ? Number(e.target.value) : v))} style={{'--range-fill': `${levels[i % levels.length]}%`} as React.CSSProperties} />
+              <div className="fader-track" />
+            </div>
+            <span className="channel-name">{name.replace(/_/g, ' ')}</span>
+            <span className="channel-db">{((levels[i % levels.length] || 50) / 10 - 10).toFixed(1)} dB</span>
+          </div>
+        ))}
+      </div>
+      <div className="audio-divider" />
+      <div className="foley-section">
+        <div className="foley-title"><span>ZERO-SHOT SYNTHESIZED FOLEY</span><small>CLICK TO AUDITION</small></div>
+        <div className="foley-buttons">
+          {foley.map((sound: string, i: number) => (
+            <button key={sound} onClick={() => { setPlaying(sound); window.setTimeout(() => setPlaying(''), 1100) }} className={playing === sound ? 'foley-button playing' : 'foley-button'} title={`Preview ${sound}`}>
+              <span>{['ϟ', '〰', '⌁', '⌘', '◉'][i % 5]}</span>{sound}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="harmony">
+        <div className="foley-title"><span>24-EDO HARMONIC TUNING</span><small>MICROTONAL SCALES</small></div>
+        <div className="harmony-options">
+          {['Uncanny Neutral 3rd', 'Dystopian Paranoia', 'Cyber Mysticism', 'Crisis Cluster'].map((label, i) => (
+            <button key={label} onClick={() => setPreset(label)} className={preset === label ? 'harmony-chip chosen' : 'harmony-chip'}>
+              {label}<small>{['350¢ · 261.63 Hz', '150¢ · 233.08 Hz', '470¢ · 277.18 Hz', '100¢ · 220.00 Hz'][i]}</small>
+            </button>
+          ))}
+        </div>
+      </div>
+    </Panel>
+  )
 }
 
 function CreatorPanel() {
@@ -47,14 +160,14 @@ function CreatorPanel() {
 }
 
 function RunModal({ step, onClose }: { step: number; onClose: () => void }) {
-  const log = ['Narrative Agent — screenplay continuity verified', 'Visual Agent — 3 scene boards rendered', 'Audio Studio — score stems synchronized', 'Creator Agent — distribution package assembled']
+  const log = ['Narrative Agent (Module 1) — Dialogue & psychology constraints validated', 'Visual Agent (Module 2) — 3 scene boards & turnarounds rendered', 'Audio Studio (Module 3) — Tension stems & zero-shot foley synchronized', 'Creator Agent (Module 4) — Vertical reels & A/B heatmap package assembled']
   return <div className="modal-backdrop" role="presentation" onClick={onClose}><section className="run-modal" role="dialog" aria-modal="true" aria-labelledby="run-title" onClick={e => e.stopPropagation()}><div className="modal-top"><div className="modal-icon"><WandSparkles size={17} /></div><button className="icon-button" onClick={onClose} aria-label="Close pipeline status">×</button></div><div className="eyebrow">AUTONOMOUS PRODUCTION</div><h2 id="run-title">Swarm pipeline</h2><p className="modal-copy">Four creative agents are collaborating on your production package.</p><div className="progress-track"><i style={{width: `${step * 25}%`}} /></div><div className="step-count">STEP {Math.min(step, 4)} OF 4 <span>{step >= 4 ? 'COMPLETE' : 'PROCESSING'}</span></div><div className="execution-log">{log.map((item, i) => <div key={item} className={i < step ? 'log-line completed' : 'log-line'}><span>{i < step ? <Check size={12} /> : <i />}</span>{item}{i === step - 1 && step < 4 && <small>DONE</small>}</div>)}</div><button className="modal-done" onClick={onClose}>{step >= 4 ? 'Return to studio' : 'Run in background'} <ChevronRight size={14} /></button></section></div>
 }
 
 function LandingPage({ onEnter }: { onEnter: (tab?: Tab) => void }) {
   const bars = [35, 24, 50, 72, 88, 42, 66, 48]
   const agents: { name: string; detail: string; color: string; icon: typeof Activity; tab: Tab }[] = [
-    { name: 'Narrative Agent', detail: 'story, character & lore', color: 'cyan', icon: Clapperboard, tab: '1. Screenplay & Lore' },
+    { name: 'Narrative Agent', detail: 'story, character & lore (NVIDIA Nemotron)', color: 'cyan', icon: Clapperboard, tab: '1. Screenplay & Lore' },
     { name: 'Visual Studio', detail: 'concept art & 3D design', color: 'violet', icon: Layers3, tab: '2. Visual & 3D Art' },
     { name: 'Audio Studio', detail: 'score, stems & soundscapes', color: 'amber', icon: AudioLines, tab: '3. Audio & Soundscapes' },
     { name: 'Creator Agent', detail: 'reels & distribution', color: 'pink', icon: Radio, tab: '4. Distribution Hub' },
@@ -76,16 +189,234 @@ export default function DirectRStudio() {
   const [tab, setTab] = useState<Tab>('Full Studio View')
   const [running, setRunning] = useState(false)
   const [step, setStep] = useState(0)
-  const [npc, setNpc] = useState(false)
-  useEffect(() => { setScene(tension > .78 ? 2 : tension > .4 ? 1 : 0) }, [tension])
-  useEffect(() => { if (!running || step >= 4) return; const timer = window.setTimeout(() => setStep(v => v + 1), 1050); return () => window.clearTimeout(timer) }, [running, step])
-  const visible = (module: string) => tab === 'Full Studio View' || tab === module
-  function exportPackage() {
-    const data = { project: 'Chronicles of Neo-Aethel', genre: 'Cyberpunk Sci-Fi Fantasy', durationMinutes: 5, scenes, characters: ['Lyra Vance', 'Kaelen Cross'], dramaticTension: tension, tempoBpm: Math.round(65 + tension * 85), generatedAt: new Date().toISOString() }
-    const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })); link.download = 'directr-neo-aethel-production.json'; link.click(); URL.revokeObjectURL(link.href)
+  const [npcModal, setNpcModal] = useState(false)
+  const [npcLoading, setNpcLoading] = useState(false)
+
+  // Real backend live data state
+  const [backendConnected, setBackendConnected] = useState(false)
+  const [backendScenes, setBackendScenes] = useState<any[]>([])
+  const [activeStems, setActiveStems] = useState<string[]>([])
+  const [liveBpm, setLiveBpm] = useState<number>(126)
+  const [foleyList, setFoleyList] = useState<any[]>([])
+  const [generatedNpc, setGeneratedNpc] = useState<any>(null)
+
+  // Initial check & data fetch from Python backend API
+  useEffect(() => {
+    async function checkBackend() {
+      try {
+        const res = await fetch('/api/status')
+        if (res.ok) {
+          const data = await res.json()
+          setBackendConnected(true)
+          fetchNarrative()
+        }
+      } catch (err) {
+        console.log('DirectR Backend API offline, running in client-side preview mode.')
+      }
+    }
+    checkBackend()
+  }, [])
+
+  // Sync tension to Audio Backend
+  useEffect(() => {
+    setScene(tension > .78 ? 2 : tension > .4 ? 1 : 0)
+
+    async function syncAudio() {
+      try {
+        const res = await fetch('/api/audio/arrange', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tension })
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setActiveStems(data.active_stems || [])
+          setLiveBpm(data.bpm || Math.round(65 + tension * 85))
+          if (data.foley_cues) setFoleyList(data.foley_cues)
+        }
+      } catch (e) {
+        // Fallback calculation
+        setLiveBpm(Math.round(65 + tension * 85))
+      }
+    }
+    syncAudio()
+  }, [tension])
+
+  async function fetchNarrative() {
+    try {
+      const res = await fetch('/api/narrative/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brief: {
+            title: 'Chronicles of Neo-Aethel',
+            genre: 'Cyberpunk Sci-Fi Fantasy',
+            logline: 'In a submerged neon metropolis, a lone archivist and a rogue pilot uncover a sentient AI code.'
+          }
+        })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.scenes && data.scenes.length > 0) {
+          setBackendScenes(data.scenes)
+        }
+      }
+    } catch (e) {
+      console.log('Could not fetch narrative from backend, using defaults.')
+    }
   }
-  function startRun() { setStep(0); setRunning(true) }
+
+  async function handleGenerateNpc() {
+    setNpcLoading(true)
+    setNpcModal(true)
+    try {
+      const res = await fetch('/api/narrative/npc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Iona "Switch" Marrow',
+          relationship: 'Reluctant Informant / Memory Broker',
+          setting: 'District 9 Lower Slums',
+          use_llm: true
+        })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setGeneratedNpc(data.npc)
+      } else {
+        setGeneratedNpc(null)
+      }
+    } catch (e) {
+      setGeneratedNpc(null)
+    } finally {
+      setNpcLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!running || step >= 4) return
+    const timer = window.setTimeout(() => setStep(v => v + 1), 1050)
+    return () => window.clearTimeout(timer)
+  }, [running, step])
+
+  const visible = (module: string) => tab === 'Full Studio View' || tab === module
+
+  function exportPackage() {
+    const data = {
+      project: 'Chronicles of Neo-Aethel',
+      genre: 'Cyberpunk Sci-Fi Fantasy',
+      durationMinutes: 5,
+      scenes: backendScenes.length > 0 ? backendScenes : defaultScenes,
+      characters: ['Lyra Vance', 'Kaelen Cross'],
+      dramaticTension: tension,
+      tempoBpm: liveBpm,
+      activeStems: activeStems.length > 0 ? activeStems : defaultStems,
+      generatedAt: new Date().toISOString()
+    }
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
+    link.download = 'directr-neo-aethel-production.json'
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+
+  function startRun() {
+    setStep(0)
+    setRunning(true)
+    fetchNarrative()
+  }
+
   if (view === 'landing') return <LandingPage onEnter={(destination) => { if (destination) { setTab(destination); setView('studio') } else { setView('home') } }} />
   if (view === 'home') return <CreativeHome onOpenStudio={() => { setTab('Full Studio View'); setView('studio') }} />
-  return <main className="studio-shell"><Header tension={tension} setTension={setTension} onRun={startRun} onExport={exportPackage} /><div className="workspace"><nav className="studio-nav" aria-label="Studio modules"><div className="workspace-label"><span>WORKSPACE</span><button title="Studio help" aria-label="Studio help"><CircleHelp size={15} /></button></div><button className="nav-tab home-return" onClick={() => setView('home')}><span className="nav-index"><House size={14} /></span>Home<ChevronRight size={13} /></button><div className="tab-row">{tabs.map((item, i) => <button key={item} onClick={() => setTab(item)} className={tab === item ? 'nav-tab current' : 'nav-tab'}><span className="nav-index">{i === 0 ? <Gauge size={14} /> : `0${i}`}</span>{item}<ChevronRight size={13} /></button>)}</div><div className="nav-bottom"><div className="swarm-card"><span className="swarm-orb"><Activity size={16} /></span><div><strong>Swarm is ready</strong><small>All agents connected</small></div><i /></div><div className="operator"><div className="operator-avatar">DR</div><div><strong>Studio Operator</strong><small>CREATIVE DIRECTOR</small></div><MoreHorizontal size={16} /></div></div></nav><div className="studio-content"><div className="content-heading"><div><div className="breadcrumb">PROJECTS <ChevronRight size={11} /> NEO-AETHEL <ChevronRight size={11} /> <b>{tab === 'Full Studio View' ? 'FULL STUDIO' : tab.split('. ')[1]?.toUpperCase()}</b></div><h1>{tab === 'Full Studio View' ? 'Production overview' : tab.split('. ')[1] || tab}<span className="live-label"><i /> LIVE SESSION</span></h1></div><div className="content-tools"><button title="Notifications" aria-label="Notifications"><Bell size={15} /><i /></button><button title="Audio monitoring" aria-label="Audio monitoring"><Headphones size={15} /></button><span className="date-label">SESSION 04 <b>·</b> 14:32:08 UTC</span></div></div><div className="metric-strip"><div><span><Film size={13} /> SEQUENCE</span><strong>03 <small>SCENES</small></strong></div><div><span><Mic2 size={13} /> CAST</span><strong>02 <small>CHARACTERS</small></strong></div><div><span><Music2 size={13} /> SCORE TEMPO</span><strong>{Math.round(65 + tension * 85)} <small>BPM</small></strong></div><div><span><SlidersHorizontal size={13} /> TENSION</span><strong>{tension.toFixed(2)} <small>/ 1.00</small></strong></div><div className="metric-status"><i /> PRODUCTION SYSTEMS NOMINAL</div></div><div className={`panels-grid ${tab === 'Full Studio View' ? '' : 'single-view'}`}>{visible('1. Screenplay & Lore') && <NarrativePanel scene={scene} setScene={setScene} onNpc={() => setNpc(true)} />}{visible('2. Visual & 3D Art') && <VisualPanel tension={tension} />}{visible('3. Audio & Soundscapes') && <AudioPanel tension={tension} />}{visible('4. Distribution Hub') && <CreatorPanel />}</div><footer className="status-footer"><span><i /> All systems operational</span><span><Activity size={11} /> AUTOSAVE ON</span><span>DIRECTR STUDIO <b>v1.08.4</b></span></footer></div></div>{running && <RunModal step={step} onClose={() => setRunning(false)} />}{npc && <div className="modal-backdrop" role="presentation" onClick={() => setNpc(false)}><section className="npc-modal" role="dialog" aria-modal="true" aria-labelledby="npc-title" onClick={e => e.stopPropagation()}><div className="modal-top"><div className="modal-icon"><Sparkles size={17} /></div><button className="icon-button" aria-label="Close NPC details" onClick={() => setNpc(false)}>×</button></div><div className="eyebrow">REACTIVE NPC / GENERATED</div><h2 id="npc-title">Iona “Switch” Marrow</h2><p className="modal-copy">A signal broker who sells memories by the minute—and recognizes Lyra from a life she doesn’t remember.</p><div className="npc-facts"><div><span>FACTION</span><strong>The Unmoored</strong></div><div><span>SECRET MOTIVE</span><strong>Recover her erased identity</strong></div><div><span>RELATIONSHIP WEB</span><strong>Owes Kaelen · fears the Archive</strong></div></div><button className="modal-done" onClick={() => setNpc(false)}>Add to LoreBible <Check size={14} /></button></section></div>}</main>
+
+  return (
+    <main className="studio-shell">
+      <Header tension={tension} setTension={setTension} onRun={startRun} onExport={exportPackage} backendConnected={backendConnected} />
+      <div className="workspace">
+        <nav className="studio-nav" aria-label="Studio modules">
+          <div className="workspace-label"><span>WORKSPACE</span><button title="Studio help" aria-label="Studio help"><CircleHelp size={15} /></button></div>
+          <button className="nav-tab home-return" onClick={() => setView('home')}><span className="nav-index"><House size={14} /></span>Home<ChevronRight size={13} /></button>
+          <div className="tab-row">{tabs.map((item, i) => <button key={item} onClick={() => setTab(item)} className={tab === item ? 'nav-tab current' : 'nav-tab'}><span className="nav-index">{i === 0 ? <Gauge size={14} /> : `0${i}`}</span>{item}<ChevronRight size={13} /></button>)}</div>
+          <div className="nav-bottom">
+            <div className="swarm-card">
+              <span className="swarm-orb"><Activity size={16} /></span>
+              <div><strong>{backendConnected ? 'Backend Connected' : 'Swarm Standby'}</strong><small>{backendConnected ? 'Narrative & Audio Live' : 'Run api_server.py'}</small></div>
+              <i />
+            </div>
+            <div className="operator"><div className="operator-avatar">DR</div><div><strong>Studio Operator</strong><small>CREATIVE DIRECTOR</small></div><MoreHorizontal size={16} /></div>
+          </div>
+        </nav>
+        <div className="studio-content">
+          <div className="content-heading">
+            <div>
+              <div className="breadcrumb">PROJECTS <ChevronRight size={11} /> NEO-AETHEL <ChevronRight size={11} /> <b>{tab === 'Full Studio View' ? 'FULL STUDIO' : tab.split('. ')[1]?.toUpperCase()}</b></div>
+              <h1>{tab === 'Full Studio View' ? 'Production overview' : tab.split('. ')[1] || tab}<span className="live-label"><i /> {backendConnected ? 'PYTHON BACKEND SYNCED' : 'DEMO PREVIEW'}</span></h1>
+            </div>
+            <div className="content-tools">
+              <button title="Refresh Backend" aria-label="Refresh Backend" onClick={fetchNarrative}><RefreshCw size={15} /></button>
+              <button title="Audio monitoring" aria-label="Audio monitoring"><Headphones size={15} /></button>
+              <span className="date-label">SESSION 04 <b>·</b> MVP MODE</span>
+            </div>
+          </div>
+          <div className="metric-strip">
+            <div><span><Film size={13} /> SEQUENCE</span><strong>03 <small>SCENES</small></strong></div>
+            <div><span><Mic2 size={13} /> CAST</span><strong>02 <small>CHARACTERS</small></strong></div>
+            <div><span><Music2 size={13} /> SCORE TEMPO</span><strong>{liveBpm} <small>BPM</small></strong></div>
+            <div><span><SlidersHorizontal size={13} /> TENSION</span><strong>{tension.toFixed(2)} <small>/ 1.00</small></strong></div>
+            <div className="metric-status" style={{ color: backendConnected ? '#10b981' : undefined }}>
+              <i style={{ background: backendConnected ? '#10b981' : undefined }} /> {backendConnected ? 'MODULE 1 & 3 SYNCHRONIZED' : 'LOCAL SERVER STANDBY'}
+            </div>
+          </div>
+          <div className={`panels-grid ${tab === 'Full Studio View' ? '' : 'single-view'}`}>
+            {visible('1. Screenplay & Lore') && <NarrativePanel scene={scene} setScene={setScene} onNpc={handleGenerateNpc} backendScenes={backendScenes} loading={npcLoading} />}
+            {visible('2. Visual & 3D Art') && <VisualPanel tension={tension} />}
+            {visible('3. Audio & Soundscapes') && <AudioPanel tension={tension} activeStems={activeStems} liveBpm={liveBpm} foleyList={foleyList} />}
+            {visible('4. Distribution Hub') && <CreatorPanel />}
+          </div>
+          <footer className="status-footer">
+            <span><i /> {backendConnected ? 'DirectR Python API Server Connected (Port 8000)' : 'Running Standalone Client'}</span>
+            <span><Activity size={11} /> AUTOSAVE ON</span>
+            <span>DIRECTR STUDIO <b>v1.08.4 MVP</b></span>
+          </footer>
+        </div>
+      </div>
+      {running && <RunModal step={step} onClose={() => setRunning(false)} />}
+      {npcModal && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setNpcModal(false)}>
+          <section className="npc-modal" role="dialog" aria-modal="true" aria-labelledby="npc-title" onClick={e => e.stopPropagation()}>
+            <div className="modal-top">
+              <div className="modal-icon"><Sparkles size={17} /></div>
+              <button className="icon-button" aria-label="Close NPC details" onClick={() => setNpcModal(false)}>×</button>
+            </div>
+            <div className="eyebrow">MODULE 1 / REACTIVE NPC BACKSTORY (NVIDIA NEMOTRON)</div>
+            <h2 id="npc-title">{generatedNpc?.name || 'Iona “Switch” Marrow'}</h2>
+            <p className="modal-copy">
+              {generatedNpc?.relationship ? `${generatedNpc.relationship} in ${generatedNpc.origin_setting || 'District 9 Lower Slums'}` : 'A signal broker who sells memories by the minute—and recognizes Lyra from a life she doesn’t remember.'}
+            </p>
+            <div className="npc-facts">
+              <div>
+                <span>FACTION</span>
+                <strong>{generatedNpc?.faction || 'The Unmoored'}</strong>
+              </div>
+              <div>
+                <span>SECRET MOTIVE</span>
+                <strong>{generatedNpc?.secret_motivation || 'Recover her erased identity'}</strong>
+              </div>
+              <div>
+                <span>ALLEGIANCE</span>
+                <strong>{generatedNpc?.allegiance_level ? `${(generatedNpc.allegiance_level * 100).toFixed(0)}%` : '85%'}</strong>
+              </div>
+            </div>
+            {generatedNpc?.memory_tree_nodes && generatedNpc.memory_tree_nodes.length > 0 && (
+              <div style={{ marginTop: '16px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ fontSize: '11px', color: '#6ee7b7', fontWeight: 600, marginBottom: '6px' }}>VECTOR MEMORY TREE NODE:</div>
+                <div style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.4' }}>{generatedNpc.memory_tree_nodes[0]}</div>
+              </div>
+            )}
+            <button className="modal-done" onClick={() => setNpcModal(false)}>Add to LoreBible <Check size={14} /></button>
+          </section>
+        </div>
+      )}
+    </main>
+  )
 }
