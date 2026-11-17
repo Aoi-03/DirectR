@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DirectR Visual Art &amp; Design Assist Studio</title>
+  <style>
+    :root {
+      --bg-dark: #0a0c10;
+      --panel-bg: rgba(22, 27, 34, 0.85);
+      --border-color: #30363d;
+      --accent-cyan: #00f3ff;
+      --accent-magenta: #ff0055;
+      --accent-amber: #f4d35e;
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .badge {
+      background: rgba(0, 243, 255, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid var(--accent-cyan);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 320px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .tab-bar {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: var(--accent-cyan);
+      border-bottom: 2px solid var(--accent-cyan);
+      background: rgba(0, 243, 255, 0.05);
+    }
+
+    .tab-content {
+      padding: 16px;
+      display: none;
+    }
+
+    .tab-content.active { display: block; }
+
+    .control-group {
+      margin-bottom: 18px;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .layer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #161b22;
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .layer-item input[type="checkbox"] {
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+    }
+
+    .viewport {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: radial-gradient(circle at center, #11151c 0%, #07090c 100%);
+      padding: 24px;
+    }
+
+    .canvas-container {
+      width: 100%;
+      max-width: 960px;
+      aspect-ratio: 16 / 9;
+      background: #0d1117;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .crop-guide-9-16 {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% * 9 / 16);
+      border-left: 2px dashed rgba(255, 0, 85, 0.6);
+      border-right: 2px dashed rgba(255, 0, 85, 0.6);
+      pointer-events: none;
+      display: none;
+    }
+
+    .crop-guide-label {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(255, 0, 85, 0.8);
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .hud-bar {
+      position: absolute;
+      bottom: 24px;
+      display: flex;
+      gap: 12px;
+      background: rgba(22, 27, 34, 0.8);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+    }
+
+    .hud-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .hud-btn:hover {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .hud-btn.active {
+      background: var(--accent-cyan);
+      color: #000;
+      border-color: var(--accent-cyan);
+    }
+
+    .anchor-point {
+      cursor: grab;
+      fill: var(--accent-cyan);
+      stroke: #ffffff;
+      stroke-width: 2;
+      transition: r 0.1s;
+    }
+
+    .anchor-point:hover { r: 8; fill: var(--accent-magenta); }
+
+    .node-stat {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>🎨 DirectR Visual Art &amp; Design Assist</span>
+      <span class="badge">Module 2 Active</span>
+    </div>
+    <div style="font-size: 12px; color: var(--text-muted);">
+      Branch: <code>feature/visual-art</code> | Synchronized with Audio &amp; Narrative
+    </div>
+  </header>
+
+  <div class="workspace">
+    <!-- Left Sidebar: Controls & Inspector -->
+    <div class="sidebar">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('tab-layers')">Vector Layers</button>
+        <button class="tab-btn" onclick="switchTab('tab-turnaround')">Turnarounds</button>
+        <button class="tab-btn" onclick="switchTab('tab-inpaint')">Inpaint Mask</button>
+      </div>
+
+      <!-- Tab 1: Vector Layers & Anchors -->
+      <div id="tab-layers" class="tab-content active">
+        <div class="control-group">
+          <label>Scene Selection</label>
+          <select id="sceneSelect" onchange="loadScene(this.value)" style="width: 100%; padding: 8px; background: #0d1117; color: #fff; border: 1px solid var(--border-color); border-radius: 4px;">
+            <option value="1">Scene 1: The Inciting Encounter (Tension 0.30)</option>
+            <option value="2">Scene 2: Underground Cipher Vault (Tension 0.85)</option>
+            <option value="3">Scene 3: Overlook Tower Dawn (Tension 0.55)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Layer Visibility Hierarchy</label>
+          <div class="layer-item">
+            <span>🌆 Background Plate</span>
+            <input type="checkbox" id="layer_bg" checked onchange="toggleLayer('layer_bg_group', this.checked)">
+          </div>
+          <div class="layer-item">
+            <span>🏙️ Midground Architecture</span>
+            <input type="checkbox" id="layer_mg" checked onchange="toggleLayer('layer_mg_group', this.checked)">
+          </div>
+          <div class="layer-item">
+            <span>👤 Foreground Silhouette</span>
+            <input type="checkbox" id="layer_fg" checked onchange="toggleLayer('layer_fg_group', this.checked)">
+          </div>
+          <div class="layer-item">
+            <span>⚡ Lighting &amp; Volumetrics</span>
+            <input type="checkbox" id="layer_light" checked onchange="toggleLayer('layer_light_group', this.checked)">
+          </div>
+          <div class="layer-item">
+            <span>✨ VFX Particles &amp; Sparks</span>
+            <input type="checkbox" id="layer_vfx" checked onchange="toggleLayer('layer_vfx_group', this.checked)">
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Controllable Anchor Nodes</label>
+          <div class="node-stat" id="nodeCountDisplay">Anchor Nodes: 18 Tracked</div>
+          <div class="node-stat">Click and drag circular nodes on the canvas to deform Bezier geometry in real-time.</div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Turnarounds -->
+      <div id="tab-turnaround" class="tab-content">
+        <div class="control-group">
+          <label>Character Model Sheet</label>
+          <select id="charSelect" onchange="renderTurnaround(this.value)" style="width: 100%; padding: 8px; background: #0d1117; color: #fff; border: 1px solid var(--border-color); border-radius: 4px;">
+            <option value="char_lyra">Lyra Vance (Archivist)</option>
+            <option value="char_kael">Kaelen Cross (Rogue Pilot)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Orthographic Angles</label>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="hud-btn active" onclick="setAngle('front')">Front 0°</button>
+            <button class="hud-btn" onclick="setAngle('three_quarters')">3/4 Front 45°</button>
+            <button class="hud-btn" onclick="setAngle('side')">Side 90°</button>
+            <button class="hud-btn" onclick="setAngle('three_quarters_back')">3/4 Rear 135°</button>
+            <button class="hud-btn" onclick="setAngle('back')">Back 180°</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Skeletal Rigging Landmarks</label>
+          <div class="node-stat">• Rig Type: Humanoid Bipedal (A-Pose)</div>
+          <div class="node-stat">• Head-to-Body Ratio: 7.5 Canon</div>
+          <div class="node-stat">• 15 Key Joint Landmarks Tracked</div>
+          <div class="node-stat">• OpenPose &amp; IP-Adapter Conditioned</div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Inpainting & Sketch -->
+      <div id="tab-inpaint" class="tab-content">
+        <div class="control-group">
+          <label>Inpainting Mode</label>
+          <select id="inpaintMode" style="width: 100%; padding: 8px; background: #0d1117; color: #fff; border: 1px solid var(--border-color); border-radius: 4px;">
+            <option value="touchup">Subtle Touchup (Denoising: 0.35)</option>
+            <option value="redesign" selected>Feature Redesign (Denoising: 0.68)</option>
+            <option value="generative">Generative Replace (Denoising: 0.85)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Localized Mask Region</label>
+          <button class="hud-btn" style="width: 100%; margin-bottom: 8px;" onclick="toggleInpaintMask()">Toggle Mask Overlay</button>
+          <div class="node-stat">Mask Area: [650, 200, 1270, 750] (Torso &amp; Arm Focus)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Viewport -->
+    <div class="viewport">
+      <div class="canvas-container" id="canvasFrame">
+        <!-- 9:16 Vertical Crop Guide for Reels -->
+        <div class="crop-guide-9-16" id="cropGuide">
+          <span class="crop-guide-label">9:16 Reel Safe Zone (Module 4)</span>
+        </div>
+
+        <!-- Rendered Vector SVG -->
+        <svg id="mainSvg" viewBox="0 0 1920 1080">
+          <defs>
+            <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#0a0a14" />
+              <stop offset="100%" stop-color="#121829" />
+            </linearGradient>
+            <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="8" result="b1" />
+              <feGaussianBlur stdDeviation="16" result="b2" />
+              <feMerge>
+                <feMergeNode in="b2" />
+                <feMergeNode in="b1" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          <!-- Layer 1: Background -->
+          <g id="layer_bg_group">
+            <rect width="1920" height="1080" fill="url(#bgGrad)" />
+          </g>
+
+          <!-- Layer 2: Midground Architecture -->
+          <g id="layer_mg_group">
+            <path id="mg_path" d="M 0 1080 L 0 580 C 400 480, 800 480, 800 480 S 1400 500, 1920 580 L 1920 1080 Z" fill="#161b22" stroke="#30363d" stroke-width="3" />
+          </g>
+
+          <!-- Layer 3: Foreground Character -->
+          <g id="layer_fg_group">
+            <path id="fg_path" d="M 960 480 C 1000 520, 1040 540, 1040 540 C 1060 570, 1020 680, 1010 750 C 1000 820, 990 880, 960 880 C 930 880, 920 820, 910 750 C 900 680, 860 570, 880 540 C 880 540, 920 520, 960 480 Z" fill="#050508" stroke="#00f3ff" stroke-width="4" />
+          </g>
+
+          <!-- Layer 4: Lighting -->
+          <g id="layer_light_group">
+            <path d="M 960 250 L 1400 1080 L 520 1080 Z" fill="#00f3ff" opacity="0.18" filter="url(#neonGlow)" />
+            <line x1="810" y1="330" x2="1110" y2="330" stroke="#ff0055" stroke-width="6" filter="url(#neonGlow)" />
+          </g>
+
+          <!-- Layer 5: VFX Sparks -->
+          <g id="layer_vfx_group">
+            <circle cx="580" cy="460" r="6" fill="#ffe600" filter="url(#neonGlow)" />
+            <circle cx="820" cy="490" r="8" fill="#ffe600" filter="url(#neonGlow)" />
+            <circle cx="1120" cy="470" r="7" fill="#ffe600" filter="url(#neonGlow)" />
+            <circle cx="1380" cy="510" r="9" fill="#ffe600" filter="url(#neonGlow)" />
+          </g>
+
+          <!-- Interactive Bezier Anchor Nodes Overlay -->
+          <g id="anchors_group">
+            <circle class="anchor-point" cx="960" cy="480" r="6" data-target="fg_head" onmousedown="startDrag(evt)" />
+            <circle class="anchor-point" cx="1040" cy="540" r="6" data-target="fg_shoulder_r" onmousedown="startDrag(evt)" />
+            <circle class="anchor-point" cx="880" cy="540" r="6" data-target="fg_shoulder_l" onmousedown="startDrag(evt)" />
+            <circle class="anchor-point" cx="960" cy="880" r="6" data-target="fg_base" onmousedown="startDrag(evt)" />
+          </g>
+
+          <!-- Inpaint Mask Overlay (Initially Hidden) -->
+          <g id="mask_overlay" style="display: none;">
+            <rect x="0" y="0" width="1920" height="1080" fill="rgba(0,0,0,0.7)" />
+            <rect x="750" y="420" width="420" height="480" rx="16" fill="rgba(255,0,85,0.4)" stroke="#ff0055" stroke-dasharray="8 4" stroke-width="3" />
+            <text x="760" y="450" fill="#ff0055" font-size="18" font-weight="bold">INPAINT MASK REGION</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Bottom HUD Toolbar -->
+      <div class="hud-bar">
+        <button class="hud-btn" id="btnCrop" onclick="toggle916Guide()">📐 9:16 Vertical Reel Guide</button>
+        <button class="hud-btn" onclick="resetGeometry()">↺ Reset Anchors</button>
+        <button class="hud-btn" onclick="exportSVG()">💾 Download SVG</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    function toggleLayer(layerId, visible) {
+      const g = document.getElementById(layerId);
+      if (g) g.style.display = visible ? 'block' : 'none';
+    }
+
+    function toggle916Guide() {
+      const guide = document.getElementById('cropGuide');
+      const btn = document.getElementById('btnCrop');
+      const isVisible = guide.style.display === 'block';
+      guide.style.display = isVisible ? 'none' : 'block';
+      btn.classList.toggle('active', !isVisible);
+    }
+
+    function toggleInpaintMask() {
+      const mask = document.getElementById('mask_overlay');
+      const isVisible = mask.style.display === 'block';
+      mask.style.display = isVisible ? 'none' : 'block';
+    }
+
+    function setAngle(angle) {
+      document.querySelectorAll('#tab-turnaround .hud-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      const path = document.getElementById('fg_path');
+      if (angle === 'side') {
+        path.setAttribute('d', 'M 960 480 C 970 510, 980 540, 980 540 C 990 570, 960 680, 955 750 C 950 820, 950 880, 960 880 C 945 880, 940 820, 940 750 C 940 680, 930 570, 935 540 C 935 540, 950 510, 960 480 Z');
+      } else {
+        path.setAttribute('d', 'M 960 480 C 1000 520, 1040 540, 1040 540 C 1060 570, 1020 680, 1010 750 C 1000 820, 990 880, 960 880 C 930 880, 920 820, 910 750 C 900 680, 860 570, 880 540 C 880 540, 920 520, 960 480 Z');
+      }
+    }
+
+    function loadScene(sceneNum) {
+      const mg = document.getElementById('mg_path');
+      if (sceneNum === "2") {
+        mg.setAttribute('fill', '#3a0509');
+        mg.setAttribute('stroke', '#ff1e42');
+      } else {
+        mg.setAttribute('fill', '#161b22');
+        mg.setAttribute('stroke', '#30363d');
+      }
+    }
+
+    function exportSVG() {
+      const svg = document.getElementById('mainSvg').outerHTML;
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'directr_scene_layered.svg';
+      a.click();
+    }
+
+    let activeAnchor = null;
+    function startDrag(evt) {
+      activeAnchor = evt.target;
+      window.addEventListener('mousemove', onDrag);
+      window.addEventListener('mouseup', stopDrag);
+    }
+    function onDrag(evt) {
+      if (!activeAnchor) return;
+      const svg = document.getElementById('mainSvg');
+      const pt = svg.createSVGPoint();
+      pt.x = evt.clientX;
+      pt.y = evt.clientY;
+      const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+      activeAnchor.setAttribute('cx', svgP.x);
+      activeAnchor.setAttribute('cy', svgP.y);
+    }
+    function stopDrag() {
+      activeAnchor = null;
+      window.removeEventListener('mousemove', onDrag);
+      window.removeEventListener('mouseup', stopDrag);
+    }
+    function resetGeometry() {
+      document.querySelectorAll('.anchor-point')[0].setAttribute('cx', 960);
+      document.querySelectorAll('.anchor-point')[0].setAttribute('cy', 480);
+    }
+  </script>
+</body>
+</html>
